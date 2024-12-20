@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-
+    "encoding/json"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -40,80 +40,91 @@ var tasks = map[string]Task{
 }
 
 // Ниже напишите обработчики для каждого эндпоинта
-func getTasks(res http.ResponseWriter, req *http.Request) {
-    s := time.Now().Format("02.01.2006 15:04:05")
-    res.Write([]byte(s))
-}
-
-func postTasks(w http.ResponseWriter, r *http.Request) {
-    var artist Artist
-    var buf bytes.Buffer
-
-    _, err := buf.ReadFrom(r.Body)
+func getTasks(w http.ResponseWriter, r *http.Request) {
+    // сериализуем данные из слайса artists
+    resp, err := json.Marshal(tasks)
     if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
+        http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
 
-    if err = json.Unmarshal(buf.Bytes(), &artist); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    artists[artist.ID] = artist
-
+    // в заголовок записываем тип контента, у нас это данные в формате JSON
     w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusCreated)
-}
-
-func getTask(w http.ResponseWriter, r *http.Request) {
-    id := chi.URLParam(r, "id")
-
-    artist, ok := artists[id]
-    if !ok {
-        http.Error(w, "Артист не найден", http.StatusNoContent)
-        return
-    }
-
-    resp, err := json.Marshal(artist)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
+    // так как все успешно, то статус OK
     w.WriteHeader(http.StatusOK)
+    // записываем сериализованные в JSON данные в тело ответа
     w.Write(resp)
 }
 
-func deleteTask(w http.ResponseWriter, r *http.Request) {
-    id := chi.URLParam(r, "id")
-
-    artist, ok := artists[id]
-    if !ok {
-        http.Error(w, "Артист не найден", http.StatusNoContent)
-        return
-    }
-
-    resp, err := json.Marshal(artist)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(resp)
-}
+// func postTasks(w http.ResponseWriter, r *http.Request) {
+//     var artist Artist
+//     var buf bytes.Buffer
+//
+//     _, err := buf.ReadFrom(r.Body)
+//     if err != nil {
+//         http.Error(w, err.Error(), http.StatusBadRequest)
+//         return
+//     }
+//
+//     if err = json.Unmarshal(buf.Bytes(), &artist); err != nil {
+//         http.Error(w, err.Error(), http.StatusBadRequest)
+//         return
+//     }
+//
+//     artists[artist.ID] = artist
+//
+//     w.Header().Set("Content-Type", "application/json")
+//     w.WriteHeader(http.StatusCreated)
+// }
+//
+// func getTask(w http.ResponseWriter, r *http.Request) {
+//     id := chi.URLParam(r, "id")
+//
+//     artist, ok := artists[id]
+//     if !ok {
+//         http.Error(w, "Артист не найден", http.StatusNoContent)
+//         return
+//     }
+//
+//     resp, err := json.Marshal(artist)
+//     if err != nil {
+//         http.Error(w, err.Error(), http.StatusBadRequest)
+//         return
+//     }
+//
+//     w.Header().Set("Content-Type", "application/json")
+//     w.WriteHeader(http.StatusOK)
+//     w.Write(resp)
+// }
+//
+// func deleteTask(w http.ResponseWriter, r *http.Request) {
+//     id := chi.URLParam(r, "id")
+//
+//     artist, ok := artists[id]
+//     if !ok {
+//         http.Error(w, "Артист не найден", http.StatusNoContent)
+//         return
+//     }
+//
+//     resp, err := json.Marshal(artist)
+//     if err != nil {
+//         http.Error(w, err.Error(), http.StatusBadRequest)
+//         return
+//     }
+//
+//     w.Header().Set("Content-Type", "application/json")
+//     w.WriteHeader(http.StatusOK)
+//     w.Write(resp)
+// }
 
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
 	r.Get("/tasks", getTasks)
-	r.Post("/tasks", postTasks)
-	r.Get("/tasks/{id}", getTask)
-	r.Delete("/tasks/{id}", deleteTask)
+// 	r.Post("/tasks", postTasks)
+// 	r.Get("/tasks/{id}", getTask)
+// 	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
