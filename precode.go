@@ -5,6 +5,7 @@ import (
 	"net/http"
     "encoding/json"
 	"github.com/go-chi/chi/v5"
+	"bytes"
 )
 
 // Task ...
@@ -77,25 +78,25 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(http.StatusCreated)
 }
 
-// func getTask(w http.ResponseWriter, r *http.Request) {
-//     id := chi.URLParam(r, "id")
-//
-//     artist, ok := artists[id]
-//     if !ok {
-//         http.Error(w, "Артист не найден", http.StatusNoContent)
-//         return
-//     }
-//
-//     resp, err := json.Marshal(artist)
-//     if err != nil {
-//         http.Error(w, err.Error(), http.StatusBadRequest)
-//         return
-//     }
-//
-//     w.Header().Set("Content-Type", "application/json")
-//     w.WriteHeader(http.StatusOK)
-//     w.Write(resp)
-// }
+func getTask(w http.ResponseWriter, r *http.Request) {
+    id := chi.URLParam(r, "id")
+
+    task, ok := tasks[id]
+    if !ok {
+        http.Error(w, "Задача не найден", http.StatusNoContent)
+        return
+    }
+
+    resp, err := json.Marshal(task)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    w.Write(resp)
+}
 //
 // func deleteTask(w http.ResponseWriter, r *http.Request) {
 //     id := chi.URLParam(r, "id")
@@ -123,7 +124,7 @@ func main() {
 	// здесь регистрируйте ваши обработчики
 	r.Get("/tasks", getTasks)
 	r.Post("/tasks", postTasks)
-// 	r.Get("/tasks/{id}", getTask)
+	r.Get("/tasks/{id}", getTask)
 // 	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
